@@ -1,0 +1,154 @@
+
+# parameters 
+
+par lp=24,pp=12 
+par Omega=100 
+par v1=4.58,v1L=3.0,v2A=1.27,v2B=1.5,v2L=5.0,v3=1.0,v4=1.47
+par k1L=0.265,k1D=0.21,k2=0.35,k3=0.56,k4=0.57
+par p1=0.76,p1L=0.42,p2=1.01,p3=0.64,p4=1.01
+par d1=0.68,d2D=0.51,d2L=0.29,d3D=0.48,d3L=0.78,d4D=1.21,d4L=0.38
+par KK1=5.07,KK2=0.16,KK3=1.18,KK4=1.2,KK5=0.40,KK6=0.62
+par KK7=0.46,KK8=2.0,KK9=0.36,KK10=1.9,KK11=1.9
+
+# initial conditions 
+
+init CLm=5,CLp=5,P97m=5,P97p=5
+init P51m=5,P51p=5,ELm=5,ELp=5
+init P=5
+init tr=0
+
+# light condition
+L=heav(pp-mod(tr,lp))
+D=1-L
+
+
+# compute the cumulative reactions
+
+#CLm transcription
+pb1=v1*Omega/(1+(CLp/KK1/Omega)^2+(P97p/KK2/Omega)^2+(P51p/KK3/Omega)^2)	
+#CLm light transcription
+pb2=pb1+v1L*L*P/(1+(CLp/KK1/Omega)^2+(P97p/KK2/Omega)^2+(P51p/KK3/Omega)^2) 
+#CLm dark degradation
+pb3=pb2+k1D*D*CLm	
+#CLm light degradation
+pb4=pb3+k1L*L*CLm 
+
+#CLp translation
+pb5=pb4+p1*CLm	
+#CLp light translation
+pb6=pb5+p1L*L*CLm	
+#CLp degradation
+pb7=pb6+d1*CLp 
+
+#P97m transcription
+pb8=pb7+v2A*Omega/(1+(CLp/KK4/Omega)^2+(P51p/KK5/Omega)^2+(ELp/KK6/Omega)^2) 
+#P97m light transcription
+pb9=pb8+v2L*L*P/(1+(CLp/KK4/Omega)^2+(P51p/KK5/Omega)^2+(ELp/KK6/Omega)^2)
+#P97m degradation
+pb10=pb9+k2*P97m 
+
+#P97p translation
+pb11=pb10+p2*P97m 
+#P97p dark degradation
+pb12=pb11+d2D*D*P97p 
+#P97p light degradation
+pb13=pb12+d2L*L*P97p 
+
+#P51m transcription
+pb14=pb13+v3*Omega/(1+(CLp/KK7/Omega)^2+(P51p/KK8/Omega)^2) 
+#P51m degradation
+pb15=pb14+k3*P51m 
+
+#P51p translation
+pb16=pb15+p3*P51m 
+#P51p dark degradation
+pb17=pb16+d3D*D*P51p 
+#P51p light degradation
+pb18=pb17+d3L*L*P51p 
+
+#EL lgith transcription
+pb19=pb18+v4*Omega*L/(1+(CLp/KK9/Omega)^2+(P51p/KK10/Omega)^2+(ELp/KK11/Omega)^2) 
+#ELm degradation
+pb20=pb19+k4*ELm 
+
+#ELp translation
+pb21=pb20+p4*ELm 
+#ELp dark degradation
+pb22=pb21+d4D*D*ELp 
+#ELp light degradation
+pb23=pb22+d4L*L*ELp 
+
+#P dark accumulation
+pb24=pb23+0.3*(1*Omega-P)*D 
+#P light degradation
+pb25=pb24+P*L 
+
+
+
+# chosse random 
+s2=ran(1)*pb25
+z1=(s2<pb1)
+z2=(s2<pb2)&(s2>=pb1)
+z3=(s2<pb3)&(s2>=pb2)
+z4=(s2<pb4)&(s2>=pb3)
+z5=(s2<pb5)&(s2>=pb4)
+z6=(s2<pb6)&(s2>=pb5)
+z7=(s2<pb7)&(s2>=pb6)
+z8=(s2<pb8)&(s2>=pb7)
+z9=(s2<pb9)&(s2>=pb8)
+z10=(s2<pb10)&(s2>=pb9)
+z11=(s2<pb11)&(s2>=pb10)
+z12=(s2<pb12)&(s2>=pb11)
+z13=(s2<pb13)&(s2>=pb12)
+z14=(s2<pb14)&(s2>=pb13)
+z15=(s2<pb15)&(s2>=pb14)
+z16=(s2<pb16)&(s2>=pb15)
+z17=(s2<pb17)&(s2>=pb16)
+z18=(s2<pb18)&(s2>=pb17)
+z19=(s2<pb19)&(s2>=pb18)
+z20=(s2<pb20)&(s2>=pb19)
+z21=(s2<pb21)&(s2>=pb20)
+z22=(s2<pb22)&(s2>=pb21)
+z23=(s2<pb23)&(s2>=pb22)
+z24=(s2<pb24)&(s2>=pb23)
+z25=(s2>=pb24)
+
+# time for next reaction
+tr'=tr-log(ran(1))/pb25
+
+# state update
+CLm'=max(1,CLm+z1+z2-z3-z4)
+CLp'=max(1,CLp+z5+z6-z7)
+P97m'=max(1,P97m+z8+z9-z10)
+P97p'=max(1,P97p+z11-z12-z13)
+P51m'=max(1,P51m+z14-z15)
+P51p'=max(1,P51p+z16-z17-z18)
+ELm'=max(1,ELm+z19-z20)
+ELp'=max(1,ELp+z21-z22-z23)
+P'=max(1,P+z24-z25)
+
+aux L=L
+aux D=D
+
+@ bound=1000000000,meth=discrete,total=300000,njmp=20
+@nplot=2,yp1=CLm,yp2=L
+@ xlo=0,ylo=0,xhi=300000,yhi=300
+done 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
